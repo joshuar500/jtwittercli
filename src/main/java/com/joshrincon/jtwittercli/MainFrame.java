@@ -20,6 +20,7 @@ public class MainFrame extends JFrame {
 
         scrollPane.setPreferredSize(new Dimension(650, 450));
         scrollPane.setBounds(0, 40, 650, 450);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollBar = scrollPane.getVerticalScrollBar();
         scrollBar.setValue(scrollBar.getMaximum());
 

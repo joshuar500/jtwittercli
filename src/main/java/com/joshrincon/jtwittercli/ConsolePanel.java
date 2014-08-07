@@ -1,8 +1,6 @@
 package com.joshrincon.jtwittercli;
 
-import twitter4j.Status;
-import twitter4j.Twitter;
-import twitter4j.TwitterException;
+import twitter4j.*;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
@@ -14,6 +12,7 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.*;
 
 
 public class ConsolePanel extends JPanel{
@@ -35,6 +34,10 @@ public class ConsolePanel extends JPanel{
 
     GridBagConstraints commandGC = new GridBagConstraints();
 
+    public static final int SUCCESS_TEXT = 1;
+    public static final int ERROR_TEXT = 2;
+    public static final int UPDATE_TEXT = 3;
+
     public ConsolePanel() {
 
         try {
@@ -42,6 +45,9 @@ public class ConsolePanel extends JPanel{
             twitter = twitHandler.getTwitter();
             requestToken = twitter.getOAuthRequestToken();
             accessToken = null;
+            if(twitHandler.fileExists()) {
+                twitter.setOAuthAccessToken(twitHandler.loadAccessToken());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -111,44 +117,39 @@ public class ConsolePanel extends JPanel{
 
     private void addInfoText() {
 
-        output = new JTextArea();
-        output.setBackground(new Color(0, 0, 0));
-        output.setForeground(new Color(200, 0, 100));
-        output.setFocusable(true);
-        output.setEnabled(false);
-        output.append("Type \"auth\" or copy paste the following URL into");
-        outputPanel.add(output);
-        output = new JTextArea();
-        output.setBackground(new Color(0, 0, 0));
-        output.setForeground(new Color(200, 0, 100));
-        output.setFocusable(true);
-        output.setEnabled(false);
-        output.append("your browser and grant access to your account:");
-        outputPanel.add(output);
-        output = new JTextArea();
-        output.setBackground(new Color(0, 0, 0));
-        output.setForeground(new Color(200, 0, 100));
-        output.setFocusable(true);
-        output.setEditable(false);
-        output.setFocusable(false);
-        output.append(requestToken.getAuthorizationURL());
-        outputPanel.add(output);
+        if(!twitHandler.fileExists()) {
+            textAreaDesigner(output, SUCCESS_TEXT);
+            output.append("Type \"auth\" or copy paste the following URL into");
+            outputPanel.add(output);
 
+            textAreaDesigner(output, SUCCESS_TEXT);
+            output.append("your browser and grant access to your account:");
+            outputPanel.add(output);
+
+            textAreaDesigner(output, SUCCESS_TEXT);
+            output.append(requestToken.getAuthorizationURL());
+            outputPanel.add(output);
+        } else {
+            textAreaDesigner(output, SUCCESS_TEXT);
+            output.append("Welcome back!");
+            outputPanel.add(output);
+        }
         revalidate();
     }
 
     private void setupOutput(JComponent component) {
-
         outputPanel.add(component);
+        commandField.setText("");
+    }
 
-        revalidate();
-
+    private void updateGUI() {
         int height = (int) getPreferredSize().getHeight();
         Rectangle rect = new Rectangle(0, height, 10, 10);
         scrollRectToVisible(rect);
 
-        commandField.setText("");
+        System.out.println("Height: " + height);
 
+        revalidate();
     }
 
     private void designView() {
@@ -166,6 +167,46 @@ public class ConsolePanel extends JPanel{
         commandField.setBorder(null);
         commandField.getCaret().setVisible(false);
         commandField.getCaret().setBlinkRate(0);
+    }
+
+    public void textAreaDesigner(JTextArea textArea, int i) {
+        switch (i) {
+            case SUCCESS_TEXT:
+                output = new JTextArea();
+                output.setBackground(new Color(0, 0, 0));
+                output.setForeground(new Color(200, 0, 100));
+                output.setFocusable(false);
+                output.setEnabled(true);
+                output.setLineWrap(true);
+                output.setWrapStyleWord(true);
+                break;
+            case ERROR_TEXT:
+                output = new JTextArea();
+                output.setText("Something went wrong...");
+                output.setBackground(new Color(0, 0, 0));
+                output.setForeground(new Color(255, 0, 0));
+                output.setFocusable(false);
+                output.setLineWrap(true);
+                output.setWrapStyleWord(true);
+                break;
+            case UPDATE_TEXT:
+                output = new JTextArea();
+                output.setBackground(new Color(0, 0, 0));
+                output.setForeground(new Color(0, 150, 150));
+                output.setFocusable(false);
+                output.setLineWrap(true);
+                output.setWrapStyleWord(true);
+                break;
+            default:
+                output = new JTextArea();
+                output.setBackground(new Color(0, 0, 0));
+                output.setForeground(new Color(200, 0, 100));
+                output.setFocusable(false);
+                output.setEnabled(false);
+                output.setLineWrap(true);
+                output.setWrapStyleWord(true);
+                break;
+        }
     }
 
     private void setKeyBindings() {
@@ -206,17 +247,11 @@ public class ConsolePanel extends JPanel{
                         URI uri = new URI(requestToken.getAuthenticationURL());
                         desktop.browse(uri);
 
-                        output = new JTextArea();
+                        textAreaDesigner(output, SUCCESS_TEXT);
                         output.setText(commandField.getText());
-                        output.setBackground(new Color(0, 0, 0));
-                        output.setForeground(new Color(200, 0, 100));
-                        output.setFocusable(true);
                         setupOutput(output);
-                        output = new JTextArea();
-                        output.setBackground(new Color(0, 0, 0));
-                        output.setForeground(new Color(200, 0, 100));
-                        output.setFocusable(true);
-                        output.setEnabled(false);
+
+                        textAreaDesigner(output, SUCCESS_TEXT);
                         output.append("Enter the PIN when given...");
                         outputPanel.add(output);
                     } catch (IOException e) {
@@ -232,74 +267,106 @@ public class ConsolePanel extends JPanel{
                     accessToken = twitter.getOAuthAccessToken(requestToken, commandField.getText());
                     //TODO: save request token so that users don't have to type in an auth number all the time
                     //twitHandler.storeAccessToken(twitter.verifyCredentials().getId(), accessToken);
-                    output = new JTextArea();
+                    textAreaDesigner(output, SUCCESS_TEXT);
                     output.setText(commandField.getText());
-                    output.setBackground(new Color(0, 0, 0));
-                    output.setForeground(new Color(200, 0, 100));
-                    output.setEditable(false);
-                    output.setFocusable(true);
                     setupOutput(output);
-                    output = new JTextArea();
+
+                    textAreaDesigner(output, SUCCESS_TEXT);
                     output.setText("Authentication successful. Please type a command or /help.");
-                    output.setBackground(new Color(0, 0, 0));
-                    output.setForeground(new Color(100, 0, 100));
-                    output.setFocusable(true);
                     setupOutput(output);
+
+                    updateGUI();
+
+                    twitHandler.storeAccessToken(accessToken);
+
                 } catch (TwitterException e) {
                     e.printStackTrace();
-                    output = new JTextArea();
-                    output.setText("Something went wrong...");
-                    output.setBackground(new Color(0, 0, 0));
-                    output.setForeground(new Color(255, 0, 0));
-                    output.setFocusable(true);
+                    textAreaDesigner(output, ERROR_TEXT);
                     setupOutput(output);
                 }
             }
 
-            else if(commandField.getText().contains("/update")) {
-                String regex = "\\/*\\bupdate\\b\\s*";
+            else if(commandField.getText().contains("/tweet")) {
+                String regex = "\\/*\\btweet\\b\\s*";
                 String newString = commandField.getText().replaceAll(regex, "");
                 System.out.println(newString);
 
                 try {
                     Status status = twitter.updateStatus(newString);
-                    output = new JTextArea();
+                    textAreaDesigner(output, SUCCESS_TEXT);
                     output.setText(commandField.getText());
-                    output.setBackground(new Color(0, 0, 0));
-                    output.setForeground(new Color(200, 0, 100));
-                    output.setEditable(false);
-                    output.setFocusable(true);
                     setupOutput(output);
-                    output = new JTextArea();
+
+                    textAreaDesigner(output, UPDATE_TEXT);
                     output.setText("Updated status: " + status.getText());
-                    output.setBackground(new Color(0, 0, 0));
-                    output.setForeground(new Color(0, 150, 150));
-                    output.setFocusable(true);
                     setupOutput(output);
                 } catch (TwitterException e) {
                     e.printStackTrace();
-                    output = new JTextArea();
+                    textAreaDesigner(output, ERROR_TEXT);
                     output.setText("Something went wrong...");
-                    output.setBackground(new Color(0, 0, 0));
-                    output.setForeground(new Color(255, 0, 0));
-                    output.setFocusable(true);
                     setupOutput(output);
                 }
+
+                updateGUI();
+            }
+
+            else if(commandField.getText().contains("/get tweets")) {
+                String regex = "\\/*\\bget\\b\\s*\\btweets\\b\\s*";
+                String newString = commandField.getText().replaceAll(regex, "");
+                System.out.println(newString);
+
+                try {
+                    java.util.List<Status> statuses = twitter.getHomeTimeline();
+                    int i = 0;
+                    for(Status status : statuses) {
+                        i++;
+                        if(i % 2 == 0) {
+                            textAreaDesigner(output, SUCCESS_TEXT);
+                        } else {
+                            textAreaDesigner(output, UPDATE_TEXT);
+                        }
+                        output.setText("@" + status.getUser().getName() + " : " + status.getText());
+                        setupOutput(output);
+                    }
+                } catch (TwitterException e) {
+                    e.printStackTrace();
+                }
+
+                updateGUI();
+            }
+
+            else if(commandField.getText().contains("/search")) {
+                String regex = "\\/*\\bsearch\\b\\s*";
+                String newString = commandField.getText().replaceAll(regex, "");
+                System.out.println(newString);
+
+                Query query = new Query(newString);
+                try {
+                    QueryResult result = twitter.search(query);
+                    int i = 0;
+                    for(Status status : result.getTweets()) {
+                        i++;
+                        if(i % 2 == 0) {
+                            textAreaDesigner(output, SUCCESS_TEXT);
+                        } else {
+                            textAreaDesigner(output, UPDATE_TEXT);
+                        }
+                        output.setText("@" + status.getUser().getScreenName() + " : " + status.getText());
+                        setupOutput(output);
+                    }
+                } catch (TwitterException e) {
+                    e.printStackTrace();
+                }
+
+                updateGUI();
+
             }
 
             else {
-                output = new JTextArea();
+                textAreaDesigner(output, ERROR_TEXT);
                 output.setText("'" + commandField.getText() + "' is not a valid command. Please verify again or type /help for a list of commands. :)");
-                output.setBackground(new Color(0, 0, 0));
-                output.setForeground(new Color(255, 0, 0));
-                output.setFocusable(true);
-                output.setEnabled(false);
-                outputPanel.add(output);
-                revalidate();
-                int height = (int) getPreferredSize().getHeight();
-                Rectangle rect = new Rectangle(0, height, 10, 10);
-                scrollRectToVisible(rect);
-                commandField.setText("");
+                setupOutput(output);
+                updateGUI();
             }
         }
     }

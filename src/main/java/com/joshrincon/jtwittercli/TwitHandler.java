@@ -3,6 +3,10 @@ package com.joshrincon.jtwittercli;
 import twitter4j.*;
 import twitter4j.auth.AccessToken;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.regex.Pattern;
+
 /**
  * Created by on 8/6/2014.
  */
@@ -12,10 +16,10 @@ public class TwitHandler {
 
     //TODO: don't forget to remove these
     //Twitter App's Consumer Key
-    private String consumerKey = "xxx";
+    private String consumerKey = "ULw2YAXP4JsYZ1BECR3Wg";
 
     //Twitter App's Consumer Secret
-    private String consumerSecret = "xxx";
+    private String consumerSecret = "Y3p8QNZDt9HABhZtgLYiagW5J1qVvAXMyiemiquIf0";
     //Twitter Access Token
     private String accessToken;
     //Twitter Access Token Secret
@@ -27,20 +31,88 @@ public class TwitHandler {
 
     long userId;
 
+    AccessToken loadAccessToken;
+    File tokenFile;
 
     public TwitHandler() throws Exception {
         twitter = TwitterFactory.getSingleton();
         twitter.setOAuthConsumer(consumerKey, consumerSecret);
     }
 
-    public void setPermissions() {
-
+    public boolean fileExists() {
+        File file = new File("C:\\Users\\Grace Kim\\AppData\\Local\\Temp\\tokens.txt");
+        if(file.exists()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    public void storeAccessToken(long userId, AccessToken accessToken) {
-        this.userId = userId;
-        this.accessToken = accessToken.getToken();
-        this.accessTokenSecret = accessToken.getTokenSecret();
+    public void storeAccessToken(AccessToken accessToken) {
+
+        BufferedWriter bufferedWriter = null;
+
+        try {
+            this.accessToken = accessToken.getToken();
+            this.accessTokenSecret = accessToken.getTokenSecret();
+
+            tokenFile = new File("C:\\Users\\Grace Kim\\AppData\\Local\\Temp\\tokens.txt");
+            Writer writer;
+
+            if(!tokenFile.exists()) {
+                tokenFile.createNewFile();
+
+                writer = new FileWriter(tokenFile);
+                bufferedWriter = new BufferedWriter(writer);
+                bufferedWriter.write(this.accessToken);
+                bufferedWriter.newLine();
+                bufferedWriter.write(this.accessTokenSecret);
+
+            } else {
+                System.out.println("Something went wrong, file not written");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if(bufferedWriter != null) try {
+                bufferedWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public AccessToken loadAccessToken() {
+
+        BufferedReader bufferedReader = null;
+
+        tokenFile = new File("C:\\Users\\Grace Kim\\AppData\\Local\\Temp\\tokens.txt");
+
+        if (tokenFile.exists()) {
+            String strLine = "";
+            ArrayList<String> lines = new ArrayList<String>(2);
+            try {
+                bufferedReader = new BufferedReader(new FileReader(tokenFile));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            try {
+                while ((strLine = bufferedReader.readLine()) != null) {
+                    lines.add(strLine);
+                }
+                accessToken = lines.get(0);
+                accessTokenSecret = lines.get(1);
+                System.out.println(this.accessToken + " " + this.accessTokenSecret);
+                return new AccessToken(this.accessToken, this.accessTokenSecret);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+            System.out.println("File could not be loaded.");
+            return null;
+        }
+        return null;
     }
 
     public void setupStreamOfTweets() {
