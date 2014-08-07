@@ -2,67 +2,45 @@ package com.joshrincon.jtwittercli;
 
 import twitter4j.*;
 import twitter4j.auth.AccessToken;
-import twitter4j.auth.RequestToken;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 
 /**
  * Created by on 8/6/2014.
  */
 public class TwitHandler {
 
-    String[] keywords = {"coupon", "promo", "discount", "fucking", "fuck"};
+    private String[] keywords = {"coupon", "promo", "discount", "fucking", "fuck"};
 
+    //TODO: don't forget to remove these
     //Twitter App's Consumer Key
-    String consumerKey = "xxx";
+    private String consumerKey = "xxx";
+
     //Twitter App's Consumer Secret
-    String consumerSecret = "xxx";
+    private String consumerSecret = "xxx";
     //Twitter Access Token
-    String accessToken = "xxx";
-    //witter Access Token Secret
-    String accessTokenSecret = "xxx";
-    TwitterStreamFactory twitterStreamFactory;
-    TwitterStream twitterStream;
+    private String accessToken;
+    //Twitter Access Token Secret
+    private String accessTokenSecret;
+
+    private TwitterStreamFactory twitterStreamFactory;
+    private TwitterStream twitterStream;
+    private Twitter twitter;
+
+    long userId;
 
 
     public TwitHandler() throws Exception {
-
-        Twitter twitter = TwitterFactory.getSingleton();
+        twitter = TwitterFactory.getSingleton();
         twitter.setOAuthConsumer(consumerKey, consumerSecret);
-        RequestToken requestToken = twitter.getOAuthRequestToken();
-        AccessToken accessTokenUser= null;
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        while(null == accessTokenUser) {
-            System.out.println("Open the following URL and grant access to your account: ");
-            System.out.println(requestToken.getAuthorizationURL());
-            System.out.println("Enter the PIN (if available) or just hit enter. [PIN]:");
-            String pin = reader.readLine();
+    }
 
-            try {
-                if(pin.length() > 0) {
-                    accessTokenUser = twitter.getOAuthAccessToken(requestToken, pin);
-                } else {
-                    accessTokenUser = twitter.getOAuthAccessToken();
-                }
-            } catch (TwitterException te) {
-                if(401 == te.getStatusCode()) {
-                    System.out.println("Unable to get the access token.");
-                } else {
-                    te.printStackTrace();
-                }
-            }
-        }
-
-        storeAccessToken(twitter.verifyCredentials().getId(), accessTokenUser);
-        Status status = twitter.updateStatus("testinggg");
-        System.out.println("Successfully updated the status to" + status);
+    public void setPermissions() {
 
     }
 
-    public void storeAccessToken(long useId, AccessToken accessToken) {
-        accessToken.getToken();
-        accessToken.getTokenSecret();
+    public void storeAccessToken(long userId, AccessToken accessToken) {
+        this.userId = userId;
+        this.accessToken = accessToken.getToken();
+        this.accessTokenSecret = accessToken.getTokenSecret();
     }
 
     public void setupStreamOfTweets() {
@@ -121,6 +99,30 @@ public class TwitHandler {
 
         twitterStream.addListener(listener);
         twitterStream.sample();
+    }
+
+    public Twitter getTwitter() {
+        return twitter;
+    }
+
+    public void setTwitter(Twitter twitter) {
+        this.twitter = twitter;
+    }
+
+    public TwitterStream getTwitterStream() {
+        return twitterStream;
+    }
+
+    public void setTwitterStream(TwitterStream twitterStream) {
+        this.twitterStream = twitterStream;
+    }
+
+    public String[] getKeywords() {
+        return keywords;
+    }
+
+    public void setKeywords(String[] keywords) {
+        this.keywords = keywords;
     }
 
 }

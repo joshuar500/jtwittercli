@@ -1,10 +1,19 @@
 package com.joshrincon.jtwittercli;
 
+import twitter4j.Status;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.auth.AccessToken;
+import twitter4j.auth.RequestToken;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 
 public class ConsolePanel extends JPanel{
@@ -19,9 +28,10 @@ public class ConsolePanel extends JPanel{
     private JTextField textField;
     JTextArea output;
 
-    int y = 0;
-
     TwitHandler twitHandler;
+    Twitter twitter;
+    RequestToken requestToken;
+    AccessToken accessToken;
 
     GridBagConstraints commandGC = new GridBagConstraints();
 
@@ -29,6 +39,9 @@ public class ConsolePanel extends JPanel{
 
         try {
             twitHandler = new TwitHandler();
+            twitter = twitHandler.getTwitter();
+            requestToken = twitter.getOAuthRequestToken();
+            accessToken = null;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -92,6 +105,36 @@ public class ConsolePanel extends JPanel{
         add(commandPanel, BorderLayout.SOUTH);
         add(Box.createGlue(), BorderLayout.NORTH);
         add(backOutputPanel, BorderLayout.CENTER);
+
+        addInfoText();
+    }
+
+    private void addInfoText() {
+
+        output = new JTextArea();
+        output.setBackground(new Color(0, 0, 0));
+        output.setForeground(new Color(200, 0, 100));
+        output.setFocusable(true);
+        output.setEnabled(false);
+        output.append("Type \"auth\" or copy paste the following URL into");
+        outputPanel.add(output);
+        output = new JTextArea();
+        output.setBackground(new Color(0, 0, 0));
+        output.setForeground(new Color(200, 0, 100));
+        output.setFocusable(true);
+        output.setEnabled(false);
+        output.append("your browser and grant access to your account:");
+        outputPanel.add(output);
+        output = new JTextArea();
+        output.setBackground(new Color(0, 0, 0));
+        output.setForeground(new Color(200, 0, 100));
+        output.setFocusable(true);
+        output.setEditable(false);
+        output.setFocusable(false);
+        output.append(requestToken.getAuthorizationURL());
+        outputPanel.add(output);
+
+        revalidate();
     }
 
     private void setupOutput(JComponent component) {
@@ -103,6 +146,8 @@ public class ConsolePanel extends JPanel{
         int height = (int) getPreferredSize().getHeight();
         Rectangle rect = new Rectangle(0, height, 10, 10);
         scrollRectToVisible(rect);
+
+        commandField.setText("");
 
     }
 
@@ -144,22 +189,107 @@ public class ConsolePanel extends JPanel{
 
         @Override
         public void actionPerformed(ActionEvent actionEvent) {
-            if(!commandField.getText().isEmpty()) {
-                y++;
+            if(commandField.getText().equals("")) {
                 output = new JTextArea();
-                output.setText(commandField.getText().toString());
+                output.setText(commandField.getText());
                 output.setBackground(new Color(0, 0, 0));
                 output.setForeground(new Color(200, 0, 100));
                 output.setFocusable(true);
                 output.setEnabled(false);
                 setupOutput(output);
+            }
 
-                // remove text from commandField
-                commandField.setText("");
-                System.out.println("Command entered: " + commandField.getText().toString());
-            } else {
+            else if(commandField.getText().equals("auth")) {
+                Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+                if(desktop != null && desktop.isSupported(Desktop.Action.BROWSE)){
+                    try {
+                        URI uri = new URI(requestToken.getAuthenticationURL());
+                        desktop.browse(uri);
+
+                        output = new JTextArea();
+                        output.setText(commandField.getText());
+                        output.setBackground(new Color(0, 0, 0));
+                        output.setForeground(new Color(200, 0, 100));
+                        output.setFocusable(true);
+                        setupOutput(output);
+                        output = new JTextArea();
+                        output.setBackground(new Color(0, 0, 0));
+                        output.setForeground(new Color(200, 0, 100));
+                        output.setFocusable(true);
+                        output.setEnabled(false);
+                        output.append("Enter the PIN when given...");
+                        outputPanel.add(output);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (URISyntaxException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            else if(commandField.getText().matches(".*\\d.*")) {
+                try {
+                    accessToken = twitter.getOAuthAccessToken(requestToken, commandField.getText());
+                    //TODO: save request token so that users don't have to type in an auth number all the time
+                    //twitHandler.storeAccessToken(twitter.verifyCredentials().getId(), accessToken);
+                    output = new JTextArea();
+                    output.setText(commandField.getText());
+                    output.setBackground(new Color(0, 0, 0));
+                    output.setForeground(new Color(200, 0, 100));
+                    output.setEditable(false);
+                    output.setFocusable(true);
+                    setupOutput(output);
+                    output = new JTextArea();
+                    output.setText("Authentication successful. Please type a command or /help.");
+                    output.setBackground(new Color(0, 0, 0));
+                    output.setForeground(new Color(100, 0, 100));
+                    output.setFocusable(true);
+                    setupOutput(output);
+                } catch (TwitterException e) {
+                    e.printStackTrace();
+                    output = new JTextArea();
+                    output.setText("Something went wrong...");
+                    output.setBackground(new Color(0, 0, 0));
+                    output.setForeground(new Color(255, 0, 0));
+                    output.setFocusable(true);
+                    setupOutput(output);
+                }
+            }
+
+            else if(commandField.getText().contains("/update")) {
+                String regex = "\\/*\\bupdate\\b\\s*";
+                String newString = commandField.getText().replaceAll(regex, "");
+                System.out.println(newString);
+
+                try {
+                    Status status = twitter.updateStatus(newString);
+                    output = new JTextArea();
+                    output.setText(commandField.getText());
+                    output.setBackground(new Color(0, 0, 0));
+                    output.setForeground(new Color(200, 0, 100));
+                    output.setEditable(false);
+                    output.setFocusable(true);
+                    setupOutput(output);
+                    output = new JTextArea();
+                    output.setText("Updated status: " + status.getText());
+                    output.setBackground(new Color(0, 0, 0));
+                    output.setForeground(new Color(0, 150, 150));
+                    output.setFocusable(true);
+                    setupOutput(output);
+                } catch (TwitterException e) {
+                    e.printStackTrace();
+                    output = new JTextArea();
+                    output.setText("Something went wrong...");
+                    output.setBackground(new Color(0, 0, 0));
+                    output.setForeground(new Color(255, 0, 0));
+                    output.setFocusable(true);
+                    setupOutput(output);
+                }
+            }
+
+            else {
                 output = new JTextArea();
-                output.setText("'" + commandField.getText().toString() + "' is not a valid command. Please verify again or type /help for a list of commands. :)");
+                output.setText("'" + commandField.getText() + "' is not a valid command. Please verify again or type /help for a list of commands. :)");
                 output.setBackground(new Color(0, 0, 0));
                 output.setForeground(new Color(255, 0, 0));
                 output.setFocusable(true);

@@ -2,8 +2,6 @@ package com.joshrincon.jtwittercli;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 
 public class MainFrame extends JFrame {
 
@@ -20,14 +18,14 @@ public class MainFrame extends JFrame {
         consolePanel = new ConsolePanel();
         scrollPane = new JScrollPane(consolePanel);
 
-        scrollPane.setPreferredSize(new Dimension(600, 400));
-        scrollPane.setBounds(0, 40, 600, 400);
+        scrollPane.setPreferredSize(new Dimension(650, 450));
+        scrollPane.setBounds(0, 40, 650, 450);
         scrollBar = scrollPane.getVerticalScrollBar();
         scrollBar.setValue(scrollBar.getMaximum());
 
         add(scrollPane, BorderLayout.CENTER);
 
-        setSize(600, 400);
+        setSize(650, 450);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
