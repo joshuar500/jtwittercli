@@ -12,7 +12,23 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+
+/*
+    There are 3 different panels
+    commandPanel that holds the commandField and textField
+    in this classes Border.SOUTH field
+    backOutputPanel that lets me position the outputPanel
+    in the Border.SOUTH field
+
+    setupPanels()
+    setKeyBindings() - set up VK_ENTER is pressed
+    designView() - sets design for commandField and textField
+    addInfoText() - if it's first time logging in, show this, else show something else
+    setupOutput(JComponent) - displays the component in output
+    textAreaDesigner(JTextArea, int) - sets up the text according to input
+    KeyAction class extends AbstractAction - all logic for what to do when VK_ENTER is pressed
+*/
+
 
 
 public class ConsolePanel extends JPanel{
@@ -79,12 +95,12 @@ public class ConsolePanel extends JPanel{
         backOutputPanel.setBackground(new Color(0, 0, 0));
 
         //set up layout with gridbag layouts
-        setupInputPanel();
+        setupPanels();
         setKeyBindings();
 
     }
 
-    private void setupInputPanel() {
+    private void setupPanels() {
 
         backOutputPanel.setLayout(new BorderLayout());
         outputPanel.setLayout(new BoxLayout(outputPanel, BoxLayout.Y_AXIS));

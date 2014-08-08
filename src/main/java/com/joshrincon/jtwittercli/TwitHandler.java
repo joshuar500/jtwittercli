@@ -7,31 +7,40 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-/**
- * Created by on 8/6/2014.
- */
+/*
+    Class that handles some of the Twitter stuff
+    A lot of other methods are used in ConsolePanel
+    which needs to come into this class (keylisteners?).
+
+    fileExists()
+    storeAccessToken(AccessToken)
+    loadAccessToken
+
+    other methods have not yet been implemented or
+    are self explanatory
+*/
+
+
 public class TwitHandler {
 
     private String[] keywords = {"coupon", "promo", "discount", "fucking", "fuck"};
 
-    //TODO: don't forget to remove these
-    //Twitter App's Consumer Key
-    private String consumerKey = "ULw2YAXP4JsYZ1BECR3Wg";
+    // TODO: don't forget to remove these
+    // Twitter App's Consumer Key
+    private String consumerKey = "xxx";
 
-    //Twitter App's Consumer Secret
-    private String consumerSecret = "Y3p8QNZDt9HABhZtgLYiagW5J1qVvAXMyiemiquIf0";
-    //Twitter Access Token
+    // Twitter App's Consumer Secret
+    private String consumerSecret = "xxx";
+    // Twitter Access Token
     private String accessToken;
-    //Twitter Access Token Secret
+    // Twitter Access Token Secret
     private String accessTokenSecret;
 
+    // Set up variable to be used throughout application
     private TwitterStreamFactory twitterStreamFactory;
     private TwitterStream twitterStream;
     private Twitter twitter;
 
-    long userId;
-
-    AccessToken loadAccessToken;
     File tokenFile;
 
     public TwitHandler() throws Exception {
