@@ -15,7 +15,9 @@ Usage
 Currently, there are only a few commands (no "quotes" needed)
 
 /tweet - updates your twitter
+
 /search - searches whatever keyword and displays a list
+
 /list tweets - lists tweets from your feed
 
 License
