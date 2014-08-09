@@ -2,7 +2,7 @@ package com.joshrincon.jtwittercli;
 
 import javax.swing.*;
 
-public class App {
+public class JTwitterCLI {
 
 
     public static void main(String[] args) {

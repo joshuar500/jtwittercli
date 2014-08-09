@@ -18,15 +18,15 @@ public class MainFrame extends JFrame {
         consolePanel = new ConsolePanel();
         scrollPane = new JScrollPane(consolePanel);
 
-        scrollPane.setPreferredSize(new Dimension(650, 450));
-        scrollPane.setBounds(0, 40, 650, 450);
+        scrollPane.setPreferredSize(new Dimension(640, 480));
+        scrollPane.setBounds(0, 40, 640, 480);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollBar = scrollPane.getVerticalScrollBar();
         scrollBar.setValue(scrollBar.getMaximum());
 
         add(scrollPane, BorderLayout.CENTER);
 
-        setSize(650, 450);
+        setSize(640, 480);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 

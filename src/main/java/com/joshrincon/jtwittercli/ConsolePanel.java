@@ -5,7 +5,6 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -25,7 +24,7 @@ import java.net.URISyntaxException;
     designView() - sets design for commandField and textField
     addInfoText() - if it's first time logging in, show this, else show something else
     setupOutput(JComponent) - displays the component in output
-    textAreaDesigner(JTextArea, int) - sets up the text according to input
+    configureOutputFields(JTextArea, int) - sets up the text according to input
     KeyAction class extends AbstractAction - all logic for what to do when VK_ENTER is pressed
 */
 
@@ -43,26 +42,26 @@ public class ConsolePanel extends JPanel{
     private JTextField textField;
     JTextArea output;
 
-    TwitHandler twitHandler;
+    TwitterHandler twitterHandler;
     Twitter twitter;
     RequestToken requestToken;
     AccessToken accessToken;
 
     GridBagConstraints commandGC = new GridBagConstraints();
 
-    public static final int SUCCESS_TEXT = 1;
-    public static final int ERROR_TEXT = 2;
-    public static final int UPDATE_TEXT = 3;
+    public static final int SUCCESS_TEXT_INDEX = 1;
+    public static final int ERROR_TEXT_INDEX = 2;
+    public static final int UPDATE_TEXT_INDEX = 3;
 
     public ConsolePanel() {
 
         try {
-            twitHandler = new TwitHandler();
-            twitter = twitHandler.getTwitter();
+            twitterHandler = new TwitterHandler();
+            twitter = twitterHandler.getTwitter();
             requestToken = twitter.getOAuthRequestToken();
             accessToken = null;
-            if(twitHandler.fileExists()) {
-                twitter.setOAuthAccessToken(twitHandler.loadAccessToken());
+            if(twitterHandler.fileExists()) {
+                twitter.setOAuthAccessToken(twitterHandler.retrieveAccessToken());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -75,14 +74,13 @@ public class ConsolePanel extends JPanel{
         commandField = new JTextField(20);
 
         //design all the fields
-        designView();
+        configureCommandField();
 
         //set background color for panel
         setBackground(Color.BLACK);
 
         //set up layouts innerborder and gridbag
-        Border innerBorder = BorderFactory.createEmptyBorder(5, 10, 5, 10);
-        setBorder(innerBorder);
+        setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
         //set up commandPanel, set background to black
         commandPanel = new JPanel();
@@ -133,20 +131,20 @@ public class ConsolePanel extends JPanel{
 
     private void addInfoText() {
 
-        if(!twitHandler.fileExists()) {
-            textAreaDesigner(output, SUCCESS_TEXT);
+        if(!twitterHandler.fileExists()) {
+            configureOutputFields(output, SUCCESS_TEXT_INDEX);
             output.append("Type \"auth\" or copy paste the following URL into");
             outputPanel.add(output);
 
-            textAreaDesigner(output, SUCCESS_TEXT);
+            configureOutputFields(output, SUCCESS_TEXT_INDEX);
             output.append("your browser and grant access to your account:");
             outputPanel.add(output);
 
-            textAreaDesigner(output, SUCCESS_TEXT);
+            configureOutputFields(output, SUCCESS_TEXT_INDEX);
             output.append(requestToken.getAuthorizationURL());
             outputPanel.add(output);
         } else {
-            textAreaDesigner(output, SUCCESS_TEXT);
+            configureOutputFields(output, SUCCESS_TEXT_INDEX);
             output.append("Welcome back!");
             outputPanel.add(output);
         }
@@ -168,7 +166,7 @@ public class ConsolePanel extends JPanel{
         revalidate();
     }
 
-    private void designView() {
+    private void configureCommandField() {
         textField.setBackground(new Color(0, 0, 0));
         textField.setForeground(new Color(100, 100, 0));
         textField.setCaretColor(new Color(0, 0, 0));
@@ -185,9 +183,9 @@ public class ConsolePanel extends JPanel{
         commandField.getCaret().setBlinkRate(0);
     }
 
-    public void textAreaDesigner(JTextArea textArea, int i) {
+    public void configureOutputFields(JTextArea textArea, int i) {
         switch (i) {
-            case SUCCESS_TEXT:
+            case SUCCESS_TEXT_INDEX:
                 output = new JTextArea();
                 output.setBackground(new Color(0, 0, 0));
                 output.setForeground(new Color(200, 0, 100));
@@ -196,7 +194,7 @@ public class ConsolePanel extends JPanel{
                 output.setLineWrap(true);
                 output.setWrapStyleWord(true);
                 break;
-            case ERROR_TEXT:
+            case ERROR_TEXT_INDEX:
                 output = new JTextArea();
                 output.setText("Something went wrong...");
                 output.setBackground(new Color(0, 0, 0));
@@ -205,7 +203,7 @@ public class ConsolePanel extends JPanel{
                 output.setLineWrap(true);
                 output.setWrapStyleWord(true);
                 break;
-            case UPDATE_TEXT:
+            case UPDATE_TEXT_INDEX:
                 output = new JTextArea();
                 output.setBackground(new Color(0, 0, 0));
                 output.setForeground(new Color(0, 150, 150));
@@ -263,16 +261,14 @@ public class ConsolePanel extends JPanel{
                         URI uri = new URI(requestToken.getAuthenticationURL());
                         desktop.browse(uri);
 
-                        textAreaDesigner(output, SUCCESS_TEXT);
+                        configureOutputFields(output, SUCCESS_TEXT_INDEX);
                         output.setText(commandField.getText());
                         setupOutput(output);
 
-                        textAreaDesigner(output, SUCCESS_TEXT);
+                        configureOutputFields(output, SUCCESS_TEXT_INDEX);
                         output.append("Enter the PIN when given...");
                         outputPanel.add(output);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (URISyntaxException e) {
+                    } catch (IOException | URISyntaxException e) {
                         e.printStackTrace();
                     }
                 }
@@ -283,21 +279,21 @@ public class ConsolePanel extends JPanel{
                     accessToken = twitter.getOAuthAccessToken(requestToken, commandField.getText());
                     //TODO: save request token so that users don't have to type in an auth number all the time
                     //twitHandler.storeAccessToken(twitter.verifyCredentials().getId(), accessToken);
-                    textAreaDesigner(output, SUCCESS_TEXT);
+                    configureOutputFields(output, SUCCESS_TEXT_INDEX);
                     output.setText(commandField.getText());
                     setupOutput(output);
 
-                    textAreaDesigner(output, SUCCESS_TEXT);
+                    configureOutputFields(output, SUCCESS_TEXT_INDEX);
                     output.setText("Authentication successful. Please type a command or /help.");
                     setupOutput(output);
 
                     updateGUI();
 
-                    twitHandler.storeAccessToken(accessToken);
+                    twitterHandler.storeAccessToken(accessToken);
 
                 } catch (TwitterException e) {
                     e.printStackTrace();
-                    textAreaDesigner(output, ERROR_TEXT);
+                    configureOutputFields(output, ERROR_TEXT_INDEX);
                     setupOutput(output);
                 }
             }
@@ -309,16 +305,16 @@ public class ConsolePanel extends JPanel{
 
                 try {
                     Status status = twitter.updateStatus(newString);
-                    textAreaDesigner(output, SUCCESS_TEXT);
+                    configureOutputFields(output, SUCCESS_TEXT_INDEX);
                     output.setText(commandField.getText());
                     setupOutput(output);
 
-                    textAreaDesigner(output, UPDATE_TEXT);
+                    configureOutputFields(output, UPDATE_TEXT_INDEX);
                     output.setText("Updated status: " + status.getText());
                     setupOutput(output);
                 } catch (TwitterException e) {
                     e.printStackTrace();
-                    textAreaDesigner(output, ERROR_TEXT);
+                    configureOutputFields(output, ERROR_TEXT_INDEX);
                     output.setText("Something went wrong...");
                     setupOutput(output);
                 }
@@ -337,9 +333,9 @@ public class ConsolePanel extends JPanel{
                     for(Status status : statuses) {
                         i++;
                         if(i % 2 == 0) {
-                            textAreaDesigner(output, SUCCESS_TEXT);
+                            configureOutputFields(output, SUCCESS_TEXT_INDEX);
                         } else {
-                            textAreaDesigner(output, UPDATE_TEXT);
+                            configureOutputFields(output, UPDATE_TEXT_INDEX);
                         }
                         output.setText("@" + status.getUser().getName() + " : " + status.getText());
                         setupOutput(output);
@@ -363,9 +359,9 @@ public class ConsolePanel extends JPanel{
                     for(Status status : result.getTweets()) {
                         i++;
                         if(i % 2 == 0) {
-                            textAreaDesigner(output, SUCCESS_TEXT);
+                            configureOutputFields(output, SUCCESS_TEXT_INDEX);
                         } else {
-                            textAreaDesigner(output, UPDATE_TEXT);
+                            configureOutputFields(output, UPDATE_TEXT_INDEX);
                         }
                         output.setText("@" + status.getUser().getScreenName() + " : " + status.getText());
                         setupOutput(output);
@@ -379,7 +375,7 @@ public class ConsolePanel extends JPanel{
             }
 
             else {
-                textAreaDesigner(output, ERROR_TEXT);
+                configureOutputFields(output, ERROR_TEXT_INDEX);
                 output.setText("'" + commandField.getText() + "' is not a valid command. Please verify again or type /help for a list of commands. :)");
                 setupOutput(output);
                 updateGUI();
